@@ -26,6 +26,11 @@ writes the paper, with every stage kept under one run directory.
 
 ## Install
 
+The full TypeScript/Bun/Node.js/WebGPU rewrite is in progress on this branch.
+See [implementation status and development commands](docs/typescript-rewrite.md).
+The instructions below still describe the original Python application; the
+TypeScript package does not yet replace `agsci`.
+
 The recommended setup runs every agent phase inside Docker, which is the
 default for `agsci run`. Install [Docker](https://docs.docker.com/get-docker/),
 then build the agent image:
