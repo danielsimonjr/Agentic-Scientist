@@ -1,0 +1,45 @@
+name: TypeScript rewrite
+
+on:
+  push:
+    branches: [main, 'rewrite/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - name: Check distribution contains no Python or Bun runtime imports
+        run: |
+          if find dist -name '*.py' | grep -q .; then exit 1; fi
+          if grep -RE 'bun:|Bun\.' dist --include='*.js'; then exit 1; fi
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP"
+      - name: Test actual WGSL execution on software WebGPU
+        if: matrix.node == 24
+        run: |
+          npm install --prefix "$RUNNER_TEMP/swiftshader-package" @sparticuz/chromium@153.0.0 --no-audit --no-fund
+          mkdir -p "$RUNNER_TEMP/swiftshader"
+          node --input-type=module <<'JS'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { brotliDecompressSync } from 'node:zlib';
+          const root = process.env.RUNNER_TEMP;
+          writeFileSync(`${root}/swiftshader/driver.tar`, brotliDecompressSync(readFileSync(`${root}/swiftshader-package/node_modules/@sparticuz/chromium/bin/swiftshader.tar.br`)));
+          JS
+          tar -xf "$RUNNER_TEMP/swiftshader/driver.tar" -C "$RUNNER_TEMP/swiftshader"
+          VK_ICD_FILENAMES="$RUNNER_TEMP/swiftshader/vk_swiftshader_icd.json" bun run test:webgpu

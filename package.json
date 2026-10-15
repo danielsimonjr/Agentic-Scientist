@@ -1,0 +1,32 @@
+{
+  "name": "agentic-scientist",
+  "version": "0.2.0-dev.0",
+  "private": true,
+  "description": "TypeScript rewrite of Agentic Scientist (in development)",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=22" },
+  "packageManager": "bun@1.4.3",
+  "files": ["dist", "LICENSE"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./compute": { "types": "./dist/compute/index.d.ts", "import": "./dist/compute/index.js" },
+    "./compute/node": { "types": "./dist/compute/node.d.ts", "import": "./dist/compute/node.js" },
+    "./evaluate": { "types": "./dist/science/evaluate-circle-packing.d.ts", "import": "./dist/science/evaluate-circle-packing.js" }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "test": "bun test typescript/tests",
+    "test:node": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
+    "test:webgpu": "tsc -p tsconfig.test.json && AGSCI_TEST_WEBGPU=1 node --test .test-dist/tests/webgpu.test.js",
+    "check": "bun run typecheck && bun run build && bun run test && bun run test:node",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "5.9.3"
+  },
+  "dependencies": { "@webgpu/types": "0.1.74", "fflate": "0.8.2" },
+  "optionalDependencies": { "webgpu": "0.6.2" }
+}
